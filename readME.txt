@@ -1,6 +1,6 @@
 Smart Dashboard w python. Bardzo wstępne założenie to:
 
--telemetria sprzęty na żywo
+-telemetria sprzętu na żywo
 -lokalna pogoda
 -mapa z ruchem/korkami na żywo
 -jakość powietrza z bazdy inPOST lub z czujników "rządowych"
