@@ -1,9 +1,15 @@
+#.    docker run -p 8080:5000 smart-dashboard
+#.    http://127.0.0.1:8080
+#.    docker build -t smart-dashboard .
+
+
 
 
 # Flask  - do strony 
 # render_template - do wczytania index.html i wstawienia  danych
 from flask import Flask, render_template
 
+#from energa_outages_api import EnergaOutagesClientSync
 
 
 import json
@@ -242,16 +248,18 @@ def index():
 
     pociagi = [] # tekst do wyswietlenia
     teraz_jest_godzina = teraz.strftime("%H:%M") # aktualna godzina 
-    teraz_min = teraz.hour * 60 + teraz.minute # aktualna godzina w minutach od północy
+    teraz_minuta = teraz.hour * 60 + teraz.minute # aktualna godzina w minutach od północy
 
 
     for p in dane.get("odjazdy", []):  # przechodzimy po kolei przez każdy pociąg z pliku 
         # Bierzemy tylko te pociągi gdzie godzina odjazdu jest >= teraz
         if p["godzina"] >= teraz_jest_godzina:                                     
             h, m = map(int, p["godzina"].split(":"))                       
-            odjazd_min = h * 60 + m                                        
+            odjazd_minuta = h * 60 + m              
+
+            if odjazd_minuta >= teraz_minuta:
+                pociagi.append(f" {p['godzina']} -> {p['kierunek']} ({p['stacja']})")                         
             
-            pociagi.append(f" {p['godzina']} -> {p['kierunek']} ({p['stacja']})")
 
 
         if len(pociagi) == 4:                                         
@@ -269,6 +277,105 @@ def index():
 
 
 
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # ----------    PRAd  POCZATEK   ----------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def sprawdz_prad_energa():
+#     try:
+#         with EnergaOutagesClientSync() as client:
+#             aktywne = client.check_location(lat=54.341, lon=18.362, margin_m=500)
+#             if aktywne:
+#                 return f" {aktywne.shutdown.message[:60]}..."
+            
+#             planowane = client.check_location_planned(lat=54.341, lon=18.362, margin_m=500, window_hours=168)
+#             if planowane:
+#                 najblizsze = planowane[0]
+#                 start = najblizsze.shutdown.start_date.strftime("%d.%m %H:%M")
+#                 return f" Planowane wyłączenie: {start}"
+                
+#         return "Brak planowanych wyłączeń prądu"
+#     except Exception as e:
+#         return "Brak danych o sieci"
+
+
+
+    wylaczenia = []
+
+    
+
+    try:
+        url_energa = "https://energa-operator.pl/__system/api/document/EXTERNAL_DOCUMENT-305647"
+        odpowiedz = requests.get(url_energa, timeout=10).json()
+        
+        payload = odpowiedz.get("document", {}).get("payload", {})
+        if isinstance(payload, list):
+            lista_wylaczen = payload  
+        else:
+            lista_wylaczen = payload.get("outages", payload.get("shutdowns", payload.get("data", [])))
+        
+        for w in lista_wylaczen:
+            wiadomosc = w.get("message", "")
+            
+            if "Żukowo" in wiadomosc or "Żukowie" in wiadomosc:
+                data_od = w.get("startDate", "")[:10] 
+                
+                if data_od:
+                    ladna_data = f"{data_od[8:10]}.{data_od[5:7]}" # DD.MM
+                    krotka_wiadomosc = (wiadomosc[:50] + '...') if len(wiadomosc) > 50 else wiadomosc
+                    wylaczenia.append(f"{ladna_data}: {krotka_wiadomosc}")
+
+    except Exception as e:
+        print("Błąd wyłączeń prądu:", e)
+
+    if not wylaczenia:
+        wylaczenia.append("Brak planowanych wyłączeń")
+
+    # Dopełniamy do 4 elementów
+    while len(wylaczenia) < 4:
+        wylaczenia.append("-")
 
 
 
@@ -284,12 +391,108 @@ def index():
 
 
 
-    # ----------    POCIAGI  KONIEC   ----------
+    # ----------    WYŁĄCZENIA PRĄDU  KONIEC     ----------
 
 
 
 
-    return render_template('index.html', temp=temperatura, cisnienie=cisnienie, godzina=godzina, kalendarz=wydarzenia_z_kalendarza, pociagi=pociagi)
 
-if __name__ == '__main__': #Uruchamiamy serwer lokalny na porcie 500
-    app.run(debug=True, port=5000)
+
+
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    # ----------    POGODA Z PACZKOMATU  POCZĄTEK   ----------
+    
+    
+    inpost_pogoda = ["Brak danych"]
+    
+    inpost_kod = "MWQ01M"  
+    inpost_id = "50032"     
+    
+    try:
+        url_inpost = f"https://inpost.pl/shipx-point-data/{inpost_id}/{inpost_kod}/air_index_level"
+        naglowki = {"X-Requested-With": "XMLHttpRequest"}
+        odpowiedz = requests.post(url_inpost, headers=naglowki, timeout=10).json()
+        
+        dane = odpowiedz.get("data", {})
+        if dane:
+            temp = dane.get("temperature", "-")
+            wilg = dane.get("humidity", "-")
+            cisn = dane.get("pressure", "-")
+            inpost_pogoda = [f"{temp}°C | {wilg}% | {cisn} hPa"]
+            
+    except Exception as e:
+        print("Błąd pogody z paczkomatu:", e)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # ----------    POGODA Z PACZKOMATU  KONIEC   ----------
+
+
+
+
+
+
+
+
+
+
+
+    return render_template('index.html', temp=temperatura, cisnienie=cisnienie, godzina=godzina, kalendarz=wydarzenia_z_kalendarza, pociagi=pociagi, wylaczenia=wylaczenia, inpost_pogoda=inpost_pogoda, inpost_kod=inpost_kod)
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug=True, port=5000)
