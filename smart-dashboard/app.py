@@ -4,7 +4,18 @@
 # render_template - do wczytania index.html i wstawienia  danych
 from flask import Flask, render_template
 
+
+
+import json
+
+import os
+
+
 import requests # requests - do pobierania danych z internetu 
+
+import subprocess
+
+
 
 from datetime import datetime
 
@@ -95,6 +106,49 @@ def index():
 
 
 
+
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+
+
+
+
+    # ----------    KALENDARZ    POCZATEK     ----------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     tekst_kalendarza = requests.get(LINK_KALENDARZ).text # bierzmy kalendarze jako tekst 
     wydarzenia_z_kalendarza = []
     dzis_jest_data = datetime.now().strftime("%Y%m%d")
@@ -125,11 +179,116 @@ def index():
     while len(wydarzenia_z_kalendarza) < 4:
         wydarzenia_z_kalendarza.append("-")
 
-    # ----------    POCIĄGI      ----------
-    pociagi = [
-        "14:15 - Gdynia Główna",
-        "14:32 - Gdańsk Wrzeszcz"
-    ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # ----------    KALENDARZ    KONIEC     ----------
+
+
+
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+    ###############################################
+
+
+
+    # ----------    POCIAGI  POCZATEK   ----------
+
+
+
+
+
+
+    teraz = datetime.now()                                                
+    plik = "odjazdy_zukowo.json"                                      
+
+    try:                                                                  
+        with open(plik, encoding="utf-8") as f:                            
+            dane = json.load(f)                                            
+    except:                                                                
+        dane = {}                                                          
+
+   
+    if dane.get("data") != teraz.strftime("%Y%m%d"):  # czy plik ma dzisiejszą datę
+        subprocess.run(["python3", "wycinanie_rozkladu_pociagi.py"]) # uruchamiamy  skrypt na rozkald
+        try:                                                               
+            with open(plik, encoding="utf-8") as f: # otwieramy plik jeszcze raz
+                dane = json.load(f) # wczytujemy do zmiennej "dane"  nowo pobrane pociągi
+        except:                                                            
+            dane = {}                                                     
+
+    pociagi = [] # tekst do wyswietlenia
+    teraz_jest_godzina = teraz.strftime("%H:%M") # aktualna godzina 
+    teraz_min = teraz.hour * 60 + teraz.minute # aktualna godzina w minutach od północy
+
+
+    for p in dane.get("odjazdy", []):  # przechodzimy po kolei przez każdy pociąg z pliku 
+        # Bierzemy tylko te pociągi gdzie godzina odjazdu jest >= teraz
+        if p["godzina"] >= teraz_jest_godzina:                                     
+            h, m = map(int, p["godzina"].split(":"))                       
+            odjazd_min = h * 60 + m                                        
+            
+            pociagi.append(f" {p['godzina']} -> {p['kierunek']} ({p['stacja']})")
+
+
+        if len(pociagi) == 4:                                         
+            break                                                      
+
+    while len(pociagi) < 4:                                                
+        pociagi.append("-")                                                
+
+
+
+
+    # ----------    POCIAGI  KONIEC   ----------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # ----------    POCIAGI  KONIEC   ----------
+
 
 
 
