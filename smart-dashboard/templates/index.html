@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="60">
+    <title>Dashboard</title>
+    <style>
+        body {
+            background: #18191a;
+            color: #e4e6eb;
+            font-family: sans-serif;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .box {
+            background: #242526;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #3a3b3c;
+        }
+        h2 { margin-top: 0; color: #b0b3b8; font-size: 16px; }
+        .temp { font-size: 48px; font-weight: bold; }
+        ul { padding-left: 20px; line-height: 1.8; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>POGODA (Żukowo)</h2>
+        <div class="temp">{{ temp }}°C</div>
+    </div>
+
+    <div class="box">
+        <h2>KALENDARZ</h2>
+        <ul>
+            <li>{{ kalendarz[0] }}</li>
+            <li>{{ kalendarz[1] }}</li>
+            <li>{{ kalendarz[2] }}</li>
+            <li>{{ kalendarz[3] }}</li>
+        </ul>
+    </div>
+
+    <div class="box" style="grid-column: span 2;">
+        <h2>POCIĄGI</h2>
+        <ul>
+            <li>{{ pociagi[0] }}</li>
+            <li>{{ pociagi[1] }}</li>
+        </ul>
+    </div>
+
+</body>
+</html>
