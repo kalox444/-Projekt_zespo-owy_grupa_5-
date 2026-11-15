@@ -445,24 +445,55 @@ def index():
     
     
     inpost_pogoda = ["Brak danych"]
-    
-    inpost_kod = "MWQ01M"  
-    inpost_id = "50032"     
+    inpost_kod = "ZUK03M"  
     
     try:
-        url_inpost = f"https://inpost.pl/shipx-point-data/{inpost_id}/{inpost_kod}/air_index_level"
-        naglowki = {"X-Requested-With": "XMLHttpRequest"}
-        odpowiedz = requests.post(url_inpost, headers=naglowki, timeout=10).json()
+        url_inpost = f"https://api-pl-points.easypack24.net/v1/points/{inpost_kod}/air-sensors"
+        odpowiedz = requests.get(url_inpost, timeout=10)
         
-        dane = odpowiedz.get("data", {})
-        if dane:
-            temp = dane.get("temperature", "-")
-            wilg = dane.get("humidity", "-")
-            cisn = dane.get("pressure", "-")
-            inpost_pogoda = [f"{temp}°C | {wilg}% | {cisn} hPa"]
+        if odpowiedz.status_code == 200:
+            dane_json = odpowiedz.json()
+            values = dane_json.get("current", {}).get("values", [])
+            
+            temp, wilg, cisn, pm25, pm10 = "-", "-", "-", "-", "-"
+            
+            for item in values:
+                name = item.get("name")
+                val = item.get("value")
+                
+                if val is not None:
+                    val_z = round(float(val), 1)
+                else:
+                    continue
+                    
+                if name == "TEMPERATURE":
+                    temp = val_z
+                elif name == "HUMIDITY":
+                    wilg = val_z
+                elif name == "PRESSURE":
+                    cisn = int(round(float(val), 0))
+                elif name == "PM25":
+                    pm25 = val_z
+                elif name == "PM10":
+                    pm10 = val_z
+                    
+            if temp != "-":
+                # Przygotowujemy ładną listę linii do wyświetlenia w kafelku
+                inpost_pogoda = [
+                    f"Temp: {temp}°C | Wilg: {wilg}%",
+                    f"Ciśnienie: {cisn} hPa",
+                    f"PM2.5: {pm25} µg/m³",
+                    f"PM10: {pm10} µg/m³"
+                ]
+            else:
+                inpost_pogoda = ["Paczkomat online (brak czujników)"]
+        else:
+            inpost_pogoda = ["Brak czujników dla tego paczkomatu"]
             
     except Exception as e:
         print("Błąd pogody z paczkomatu:", e)
+        inpost_pogoda = ["Brak danych"]
+
 
 
 
