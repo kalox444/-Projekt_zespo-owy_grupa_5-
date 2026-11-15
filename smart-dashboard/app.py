@@ -22,7 +22,6 @@ from datetime import datetime
 # Tworzymy aplikację 
 app = Flask(__name__)
 
-LINK_KALENDARZ = "https://p168-caldav.icloud.com/published/2/MTE3NzcwMzEzMzAxMTc3N9hV8n-S-_35QYxvu6MN0QABMHOtT3P_bPjFa_moqgmOclzTJQoe7STET0ADGMntt8B7Bbopo8D4aQZjnM782XQ"
 
 @app.route('/') # jak glowne wejscie na strone to 
 def index():
@@ -51,7 +50,7 @@ def index():
 
     try:
         url_dane_pogody_meteo = "https://api.open-meteo.com/v1/forecast?latitude=54.341&longitude=18.362&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m&timezone=Europe%2FWarsaw" 
-        dane_pogody_meteo = requests.get(url_dane_pogody_meteo).json()
+        dane_pogody_meteo = requests.get(url_dane_pogody_meteo, timeout=10).json()
 
         temperatura = round(dane_pogody_meteo["current"]["temperature_2m"])
         cisnienie = round(dane_pogody_meteo["current"]["surface_pressure"])
@@ -133,45 +132,43 @@ def index():
 
 
 
+    LISTA_KALENDARZY = [
+        "https://p168-caldav.icloud.com/published/2/MTE3NzcwMzEzMzAxMTc3N9hV8n-S-_35QYxvu6MN0QABMHOtT3P_bPjFa_moqgmOclzTJQoe7STET0ADGMntt8B7Bbopo8D4aQZjnM782XQ",
+        "https://p168-caldav.icloud.com/published/2/MTE3NzcwMzEzMzAxMTc3N9hV8n-S-_35QYxvu6MN0QCSQqfoFuhS9qvqwq3NQXOYK_1yLCJvA2M0UwfvV3jSc7ylMy0b3-RVvgpRNKOxXao",
+        "https://p168-caldav.icloud.com/published/2/MTE3NzcwMzEzMzAxMTc3N9hV8n-S-_35QYxvu6MN0QBBzUBjhJ9IcSLzXZX4rs2L4nMjqCgnxsTY54VYGb5hsYADybFOEGz-Nc6RC4Vg5G0"
+    ]
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    tekst_kalendarza = requests.get(LINK_KALENDARZ).text # bierzmy kalendarze jako tekst 
-    wydarzenia_z_kalendarza = []
-    dzis_jest_data = datetime.now().strftime("%Y%m%d")
-
-    ostatnia_zapisana_data = ""
+    wydarzenia_z_kalendarza = []    
 
     
-    for linia in tekst_kalendarza.splitlines(): # po kazdej lini 
+    dzis_jest_data = datetime.now().strftime("%Y%m%d")
+
+    for link in LISTA_KALENDARZY:
+        try:
+            tekst = requests.get(link, timeout=10).text
+        except:
+            continue
+
+        ostatnia_zapisana_data = "" 
 
 
-        if linia.startswith("DTSTART"): # bierzemy date wydarzenia 
-                ostatnia_zapisana_data = linia.split(":")[1][:8] #RRRRMMDD                       
+        for linia in tekst.splitlines(): # po kazdej lini 
 
-        
-       
-        if linia.startswith("SUMMARY:"):  # każde nazwa wydarzenia_z_kalendarza zaczyna się od słowa "SUMMARY:"
-            nazwa = linia.replace("SUMMARY:", "") #wycianym ten napis
-            print("Z KALENDARZA:", ostatnia_zapisana_data, nazwa)
 
-            if ostatnia_zapisana_data >= dzis_jest_data:
+            if linia.startswith("DTSTART"): # bierzemy date wydarzenia 
+                    ostatnia_zapisana_data = linia.split(":")[1][:8] #RRRRMMDD                       
+
             
-                ladna_data = f"{ ostatnia_zapisana_data [6:8]}.{ ostatnia_zapisana_data [4:6]}" #ladniejsze formowanie daty
-                wydarzenia_z_kalendarza.append(f"{ladna_data} - {nazwa}")
+        
+            if linia.startswith("SUMMARY:"):  # każde nazwa wydarzenia_z_kalendarza zaczyna się od słowa "SUMMARY:"
+                nazwa = linia.replace("SUMMARY:", "") #wycianym ten napis
+                
+                if ostatnia_zapisana_data >= dzis_jest_data:
+                
+                    ladna_data = f"{ ostatnia_zapisana_data [6:8]}.{ ostatnia_zapisana_data [4:6]}" #ladniejsze formowanie daty
+                    wydarzenia_z_kalendarza.append(f"{ladna_data} - {nazwa}")
 
     wydarzenia_z_kalendarza.sort()
 
@@ -235,8 +232,8 @@ def index():
         dane = {}                                                          
 
    
-    if dane.get("data") != teraz.strftime("%Y%m%d"):  # czy plik ma dzisiejszą datę
-        subprocess.run(["python3", "wycinanie_rozkladu_pociagi.py"]) # uruchamiamy  skrypt na rozkald
+    if dane.get("data") != teraz.strftime("%Y%m%d"):
+        subprocess.Popen(["python3", "wycinanie_rozkladu_pociagi.py"]) # uruchamiamy  skrypt na rozkald, popoen nie czeka na zaskonczenie
         try:                                                               
             with open(plik, encoding="utf-8") as f: # otwieramy plik jeszcze raz
                 dane = json.load(f) # wczytujemy do zmiennej "dane"  nowo pobrane pociągi
