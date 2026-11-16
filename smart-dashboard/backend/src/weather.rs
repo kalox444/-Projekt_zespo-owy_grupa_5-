@@ -16,8 +16,10 @@ struct DanePobraneAPI {
 }
 
 
+
+// wzornik jak wyglada json, ale parsujmy go dopiero w main, to tylko wzor jak ma byc 
 #[derive(Serialize)]
-pub struct Pogoda_do_html {
+pub struct Pogoda_do_json {
     pub temp: i32,
     pub cisnienie: i32,
     pub godzina: String,
@@ -26,7 +28,7 @@ pub struct Pogoda_do_html {
 
 
 
-pub fn pobierz_pogoda_meteo() -> Result<Pogoda_do_html, String> { // albo struktura albo string ze blad format!
+pub fn pobierz_pogoda_meteo() -> Result<Pogoda_do_json, String> { // albo struktura albo string ze blad format!
 
     let url = "https://api.open-meteo.com/v1/forecast?latitude=54.341&longitude=18.362&current=temperature_2m,surface_pressure&timezone=Europe%2FWarsaw";
 
@@ -85,7 +87,7 @@ pub fn pobierz_pogoda_meteo() -> Result<Pogoda_do_html, String> { // albo strukt
 
 
 
-    Ok(Pogoda_do_html{
+    Ok(Pogoda_do_json{
         temp,
         cisnienie,
         godzina,
