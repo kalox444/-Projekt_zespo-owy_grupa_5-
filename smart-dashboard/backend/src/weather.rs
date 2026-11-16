@@ -26,7 +26,7 @@ pub struct Pogoda_do_html {
 
 
 
-pub fn pobierz_pogoda_meteo() -> Result<Pogoda_do_html, String> {
+pub fn pobierz_pogoda_meteo() -> Result<Pogoda_do_html, String> { // albo struktura albo string ze blad format!
 
     let url = "https://api.open-meteo.com/v1/forecast?latitude=54.341&longitude=18.362&current=temperature_2m,surface_pressure&timezone=Europe%2FWarsaw";
 
